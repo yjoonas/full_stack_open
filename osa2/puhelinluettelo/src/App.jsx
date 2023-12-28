@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from "axios";
 
 const Person = ({person}) => {
     return(
@@ -42,12 +43,16 @@ const PersonForm = ({submitHandler, name, phoneNumber, nameChangeHandler, number
 }
 
 const App = () => {
-    const [persons, setPersons] = useState([
-        {name: 'Arto Hellas', phoneNumber: '040-123456'},
-        {name: 'Ada Lovelace', phoneNumber: '39-44-5323523'},
-        {name: 'Dan Abramov', phoneNumber: '12-43-234345'},
-        {name: 'Mary Poppendieck', phoneNumber: '39-23-6423122'}
-    ])
+    const [persons, setPersons] = useState([])
+
+    useEffect(() => {
+        axios
+            .get("http://localhost:3001/persons")
+            .then(response => {
+                console.log("promise filled")
+                setPersons(response.data)
+            })
+    }, []);
 
     const [newPerson, setNewPerson] = useState({
         name: '', phoneNumber: ''
