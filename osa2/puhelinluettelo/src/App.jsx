@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react'
-import axios from "axios";
-
-const Person = ({person}) => {
+import personsService from "./services/persons.js";
+const Person = ({person, handlePersonDelete}) => {
     return(
         <p>
-            {person.name} {person.phoneNumber}
+            {person.name} {person.phoneNumber} <button style={{marginLeft: .5 + 'em'}} onClick={() => handlePersonDelete(person)}>delete</button>
         </p>
     )
 }
-const Persons = ({persons}) => {
+const Persons = ({persons, handlePersonDelete}) => {
     return(
         <>
             {
-                persons.map(person => <Person person={person} key={person.name}></Person> )
+                persons.map(person => <Person person={person} key={person.name} handlePersonDelete={handlePersonDelete}></Person> )
             }
         </>
     )
@@ -30,10 +29,10 @@ const PersonForm = ({submitHandler, name, phoneNumber, nameChangeHandler, number
     return (
         <form onSubmit={submitHandler}>
             <div>
-                name: <input value={name} onChange={nameChangeHandler}/>
+                name: <input type={"text"} value={name} onChange={nameChangeHandler}/>
             </div>
             <div>
-                number: <input value={phoneNumber} onChange={numberChangeHandler}/>
+                number: <input type={"number"} value={phoneNumber} onChange={numberChangeHandler}/>
             </div>
             <div>
                 <button type="submit">add</button>
@@ -46,12 +45,8 @@ const App = () => {
     const [persons, setPersons] = useState([])
 
     useEffect(() => {
-        axios
-            .get("http://localhost:3001/persons")
-            .then(response => {
-                console.log("promise filled")
-                setPersons(response.data)
-            })
+        personsService.getPersons()
+            .then(persons => setPersons(persons))
     }, []);
 
     const [newPerson, setNewPerson] = useState({
@@ -63,14 +58,36 @@ const App = () => {
     const addNewPerson = (event) => {
         event.preventDefault();
         if (persons.filter(person => person.name === newPerson.name)?.length > 0 ) {
-            alert(`${newPerson.name} is already in notebook`)
+            if (confirm(`${newPerson.name} is already in notebook. Do you want to update the phone number?`)) {
+                const personInNotebook = persons.find(p => p.name === newPerson.name)
+                personsService.updatePerson(personInNotebook.id, {...personInNotebook, phoneNumber: newPerson.phoneNumber})
+                    .then(updatedPerson => {
+                        setPersons(persons.map(p => p.id === updatedPerson.id ? updatedPerson : p))
+                        setNewPerson({
+                            name: '', phoneNumber: ''
+                        })
+                    })
+            }
         } else {
-            const newPersons = persons.concat({...newPerson})
-            setPersons(newPersons)
-            setNewPerson({
-                name: '', phoneNumber: ''
-            })
+            personsService.addPerson({...newPerson})
+                .then(person => {
+                    setPersons(persons.concat(person))
+                    setNewPerson({
+                        name: '', phoneNumber: ''
+                    })
+                })
         }
+    }
+
+    const removePerson = (person) => {
+        if (confirm(`Delete person ${person.name}`))
+        personsService.deletePerson(person.id)
+            .then(() => {
+            setPersons(persons.filter(p => p.id !== person.id))
+        })
+            .catch(e => {
+                console.log(e)
+            })
     }
 
     const handleNameChange = (event) => {
@@ -85,8 +102,8 @@ const App = () => {
     }
 
     const shownPersons = persons.filter(person => {
-     return person.name.toLowerCase().includes(search.toLowerCase())
-         || person.phoneNumber.toLowerCase().includes(search.toLowerCase())
+     return person.name?.toLowerCase().includes(search.toLowerCase())
+         || person.phoneNumber?.toLowerCase().includes(search.toLowerCase())
     })
 
     return (
@@ -101,7 +118,7 @@ const App = () => {
                 numberChangeHandler={handleNumberChange}
                 submitHandler={addNewPerson}></PersonForm>
             <h2>Numbers</h2>
-            <Persons persons={shownPersons}></Persons>
+            <Persons persons={shownPersons} handlePersonDelete={removePerson} ></Persons>
         </div>
     )
 
