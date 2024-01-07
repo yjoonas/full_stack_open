@@ -25,6 +25,22 @@ const Filter = ({search, searchHandler}) => {
     )
 }
 
+const Message = ({message, color}) => {
+    const messageStyle = {
+        border: `3px solid ${color ? color: 'green'}`,
+        borderRadius: '4px',
+        color:`${color ? color: 'green'}`,
+        background: 'lightGray',
+        paddingLeft: '10px'
+    }
+    if (!message) return null
+    return (
+        <h2 style={messageStyle}>
+                {message}
+        </h2>
+    )
+}
+
 const PersonForm = ({submitHandler, name, phoneNumber, nameChangeHandler, numberChangeHandler }) => {
     return (
         <form onSubmit={submitHandler}>
@@ -43,6 +59,8 @@ const PersonForm = ({submitHandler, name, phoneNumber, nameChangeHandler, number
 
 const App = () => {
     const [persons, setPersons] = useState([])
+    const [message, setMessage] = useState(null)
+    const [color, setColor] = useState('green')
 
     useEffect(() => {
         personsService.getPersons()
@@ -66,6 +84,12 @@ const App = () => {
                         setNewPerson({
                             name: '', phoneNumber: ''
                         })
+                        messageHandler(`${updatedPerson.name} updated`, 'green')
+                    })
+                    .catch(e => {
+                        console.log(e)
+                        messageHandler(`${personInNotebook.name} has been already removed from server`, 'red')
+                        setPersons()
                     })
             }
         } else {
@@ -75,18 +99,29 @@ const App = () => {
                     setNewPerson({
                         name: '', phoneNumber: ''
                     })
+                    messageHandler(`Added ${person.name}`, 'green')
                 })
         }
+    }
+
+    const messageHandler = (message, color) => {
+        setColor(color)
+        setMessage(message)
+        setTimeout(() => {
+            setMessage(null)
+        }, 4000)
     }
 
     const removePerson = (person) => {
         if (confirm(`Delete person ${person.name}`))
         personsService.deletePerson(person.id)
             .then(() => {
-            setPersons(persons.filter(p => p.id !== person.id))
+            setPersons(persons.filter(p => p.id !== person.id));
+            messageHandler(`${person.name} removed`)
         })
             .catch(e => {
                 console.log(e)
+                messageHandler(`${person.name} has been already removed from server`, 'red')
             })
     }
 
@@ -109,6 +144,7 @@ const App = () => {
     return (
         <div>
             <h2>Phonebook</h2>
+            <Message message={message} color={color}></Message>
             <Filter search={search} searchHandler={handleSearchChange}></Filter>
             <h2>add a new</h2>
             <PersonForm
