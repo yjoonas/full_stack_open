@@ -2,12 +2,20 @@ import {useEffect} from "react";
 import weatherService from "../services/weather.js"
 
 const Weather = ({weather, capital}) => {
+    const imgSource = weather ? ` https://openweathermap.org/img/wn/${weather.weather[0].icon}.png` : ""
     return (
-        <div>
+        <>
             <h2>
                 Weather in {capital}
             </h2>
-        </div>
+            <p>
+                temperature {weather.main.temp} celsius
+            </p>
+            <img width={100} height={100} src={imgSource} alt={'Icon representing current weather'} />
+            <p>
+                wind {weather.wind.speed} m/s
+            </p>
+        </>
     )
 }
 
