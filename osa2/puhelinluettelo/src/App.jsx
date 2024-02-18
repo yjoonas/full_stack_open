@@ -89,7 +89,6 @@ const App = () => {
                     .catch(e => {
                         console.log(e)
                         messageHandler(`${personInNotebook.name} has been already removed from server`, 'red')
-                        setPersons()
                     })
             }
         } else {
@@ -100,6 +99,10 @@ const App = () => {
                         name: '', phoneNumber: ''
                     })
                     messageHandler(`Added ${person.name}`, 'green')
+                })
+                .catch(error => {
+                    console.log(error.response.data)
+                    messageHandler(JSON.stringify(error.response.data), 'red')
                 })
         }
     }
